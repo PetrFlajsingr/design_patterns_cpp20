@@ -1,5 +1,6 @@
 #include "creational/abstract_factory.h"
 #include "creational/prototype.h"
+#include "creational/dependency_injection.h"
 #include <iostream>
 #include <type_traits>
 
@@ -78,7 +79,25 @@ JaFactory create_JaFactory() {
   }};
 }
 
+struct Hihi {
+  void print() {
+    std::cout << "hihihi\n";
+  }
+};
+
+struct DI {
+  dependency<Hihi> d;
+
+  void print() {
+    d.get().print();
+  }
+};
+
 int main() {
+  DI d;
+  d.d = Hihi{};
+  d.print();
+  return 0;
   auto factory = create_JaFactory();
   factory.create(Hi::a, 1)->print();
   factory.create(Hi::b, 2)->print();
