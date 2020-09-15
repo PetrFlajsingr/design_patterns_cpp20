@@ -5,6 +5,8 @@
 #ifndef DESIGN_PATTERNS_CONCEPTS_H
 #define DESIGN_PATTERNS_CONCEPTS_H
 
+#include<type_traits>
+
 
 template<typename T>
 concept copy_constructible = std::is_copy_constructible_v<T>;
@@ -23,5 +25,8 @@ concept copy_assign_movable = copy_assignable<T> &&std::is_constructible_v<T> &&
 
 template<typename T>
 concept copyable = copy_constructible<T> || copy_assign_movable<T>;
+
+template <typename T>
+concept enum_type = std::is_enum_v<T>;
 
 #endif//DESIGN_PATTERNS_CONCEPTS_H

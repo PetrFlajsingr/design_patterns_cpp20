@@ -1,6 +1,7 @@
+#include "creational/abstract_factory.h"
+#include "creational/prototype.h"
 #include <iostream>
 #include <type_traits>
-#include "creational/prototype.h"
 
 struct Test {
   int a;
@@ -19,7 +20,6 @@ struct Test {
   }
 };
 
-
 struct Point {
 
   int a;
@@ -33,8 +33,57 @@ struct Point {
   }
 };
 
+enum class Hi {
+  a,
+  b,
+  c,
+  d
+};
+
+struct Ja {
+  int a;
+  virtual void print() {
+    std::cout << a << "ja\n";
+  }
+};
+
+struct Jaa : public Ja {
+  void print() override {
+    std::cout << a << "jaa\n";
+  }
+};
+
+struct Jaaa : public Ja {
+  void print() override {
+    std::cout << a << "jaaa\n";
+  }
+};
+
+using JaFactory = abstract_factory<Hi, std::unique_ptr<Ja>, int>;
+
+JaFactory create_JaFactory() {
+  return JaFactory{{
+      {Hi::a, [](int a) {auto res = std::make_unique<Ja>();
+                                 res->a = a;
+                                 return res; }},
+      {Hi::b, [](int a) {auto res = std::make_unique<Jaa>();
+                                 res->a = a;
+                                 return res; }},
+      {Hi::c, [](int a) {auto res = std::make_unique<Jaaa>();
+                                 res->a = a;
+                                 return res; }},
+      {Hi::d, [](int a) {auto res = std::make_unique<Ja>();
+                                 res->a = a;
+                                 return res; }},
+  }};
+}
 
 int main() {
+  auto factory = create_JaFactory();
+  factory.create(Hi::a, 1)->print();
+  factory.create(Hi::b, 2)->print();
+  factory.create(Hi::c, 3)->print();
+  factory.create(Hi::d, 4)->print();
 
   Point a{.a = 1};
   Point b{.a = 10};
