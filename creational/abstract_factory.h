@@ -14,11 +14,12 @@
 template<enum_type E, typename ResultType, typename ...Args>
 class abstract_factory {
  public:
-  using constructor_map = std::unordered_map<E, std::function<ResultType(Args...)>>;
+  using value_type = ResultType;
+  using constructor_map = std::unordered_map<E, std::function<value_type(Args...)>>;
 
   explicit abstract_factory(constructor_map &&constructors) : constructors(constructors) {}
 
-  ResultType create(E type, Args &&...args) {
+  value_type create(E type, Args &&...args) {
     if (const auto iter = constructors.find(type); iter != constructors.end()) {
       return iter->second(std::forward<Args>(args)...);
     }

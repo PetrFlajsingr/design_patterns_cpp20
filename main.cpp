@@ -1,6 +1,11 @@
+#include "creational/RAII.h"
 #include "creational/abstract_factory.h"
-#include "creational/prototype.h"
 #include "creational/dependency_injection.h"
+#include "creational/multiton.h"
+#include "creational/object_pool.h"
+#include "creational/prototype.h"
+#include "creational/singleton.h"
+#include <cassert>
 #include <iostream>
 #include <type_traits>
 
@@ -93,7 +98,66 @@ struct DI {
   }
 };
 
+struct Cr {
+  int a;
+
+  void print() {
+    std::cout << a << std::endl;
+  }
+};
+
+struct CrBuilder {
+  Cr operator()(int a) {
+    return Cr{.a = a};
+  }
+  Cr operator()() {
+    return Cr{.a = 10};
+  }
+};
+
+using CrMultiton = multiton<int, Cr, CrBuilder>;
+using CrSingleton = singleton<Cr, CrBuilder>;
+
 int main() {
+  int cnt = 0;
+  object_pool<std::string, 10> pool{[&cnt] {++cnt;return std::to_string(cnt); }};
+  std::vector<std::reference_wrapper<std::string>> vec1;
+  for (std::size_t i = 0; i < 5; ++i) {
+    vec1.emplace_back(pool.lease());
+  }
+  std::vector<std::reference_wrapper<std::string>> vec2;
+  for (std::size_t i = 0; i < 5; ++i) {
+    vec2.emplace_back(pool.lease());
+  }
+
+
+  for (const auto &ref : vec2) {
+    std::cout << ref.get() << std::endl;
+    pool.release(ref.get());
+  }
+  for (const auto &ref : vec1) {
+    std::cout << ref.get() << std::endl;
+    pool.release(ref.get());
+  }
+
+  std::vector<std::reference_wrapper<std::string>> vec3;
+  for (std::size_t i = 0; i < 10; ++i) {
+    vec3.emplace_back(pool.lease());
+  }
+  for (const auto &ref : vec3) {
+    std::cout << ref.get() << std::endl;
+    pool.release(ref.get());
+  }
+
+  return 0;
+  auto &e = CrMultiton::get_instance(1);
+  auto &e1 = CrMultiton::get_instance(1);
+  auto &e2 = CrMultiton::get_instance(2);
+  assert(&e == &e1);
+  assert(&e != &e2);
+
+  return 0;
+
   DI d;
   d.d = Hihi{};
   d.print();
