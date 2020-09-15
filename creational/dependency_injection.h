@@ -13,7 +13,9 @@ class dependency {
   using value_type = T;
   using reference = T&;
   using const_reference = const T&;
-  dependency() {}
+  using pointer = T*;
+  using const_pointer = const T*;
+  dependency() = default;
   dependency(const dependency &other) = delete;
   dependency(dependency &&other) = delete;
   dependency &operator=(const dependency &other) = delete;

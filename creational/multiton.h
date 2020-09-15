@@ -56,7 +56,7 @@ class multiton {
   static inline std::optional<std::function<value_type(key_type)>> instance_creator = std::nullopt;
   value_type value;
 
-  multiton(key_type h) : value(Creator{}(h)) {}
+  explicit multiton(key_type h) : value(Creator{}(h)) {}
 
 };
 

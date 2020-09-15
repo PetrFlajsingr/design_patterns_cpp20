@@ -1,14 +1,16 @@
+#include "behavioral/chain_of_responsibility.h"
+#include "behavioral/iterator.h"
+#include "behavioral/visitor.h"
 #include "creational/RAII.h"
 #include "creational/abstract_factory.h"
 #include "creational/dependency_injection.h"
+#include "creational/lazy_init.h"
 #include "creational/multiton.h"
 #include "creational/object_pool.h"
 #include "creational/prototype.h"
 #include "creational/singleton.h"
-#include "creational/lazy_init.h"
-#include "behavioral/chain_of_responsibility.h"
-#include "behavioral/visitor.h"
 #include <cassert>
+#include <concepts>
 #include <iostream>
 #include <type_traits>
 #include <variant>
@@ -124,132 +126,122 @@ using CrSingleton = singleton<Cr, CrBuilder>;
 
 using chain = chain_of_responsibility<int, std::string>;
 
+template<typename T>
+class hihihi {
+ public:
+  hihihi(T start, T end) : curr(start), end(end) {}
+  void next() {
+    ++curr;
+  }
+
+  [[nodiscard]] bool valid() const {
+    return curr != end;
+  }
+
+  T &current() {
+    return curr;
+  }
+
+  [[nodiscard]] const T &current() const {
+    return curr;
+  }
+
+ private:
+  T curr;
+  T end;
+};
+template<typename T>
+using range_iter = input_iterator<T, hihihi<T>, false>;
+
+template<typename T>
+struct range {
+  range(T start, T fin) : start(start), fin(fin) {}
+  range_iter<T> begin() {
+    return range_iter<T>{start, fin};
+  }
+  range_iter<T> end() {
+    return range_iter<T>{0, 0};
+  }
+  const T start;
+  const T fin;
+};
+
+template<typename T>
+struct out_iter {
+  void assign(T value) {
+    std::cout << value << std::endl;
+  }
+};
+
+template<typename T>
+using out_i = output_iterator<T, out_iter<T>, false>;
+
+template<typename T>
+struct hi {
+  hi() {}
+  hi(typename std::vector<T>::iterator iter) : iter(iter) {
+  }
+  void next() {
+    ++iter;
+  }
+
+  bool equals(const hi &other) const {
+    return iter == other.iter;
+  }
+
+  T &current() {
+    return *iter;
+  }
+
+  void previous() {
+    --iter;
+  }
+
+  void advance(int diff) {
+    iter += diff;
+  }
+
+  int distance(const hi &other) const {
+    return iter - other.iter;
+  }
 
 
+  typename std::vector<T>::iterator iter;
+};
+
+template<typename T>
+using fwd = forward_iterator<int, hi<int>, true>;
+
+template <typename T>
+struct vec{
+  vec(std::vector<T> &v): v(v) {}
+  fwd<T> begin() {
+    return fwd<T>{v.begin()};
+  }
+  fwd<T> end() {
+    return fwd<T>{v.end()};
+  }
+
+  std::vector<T> &v;
+};
+
+template<typename T>
+using bi = random_access_iterator<int, hi<int>, true>;
 
 
+static_assert(std::random_access_iterator<bi<int>>);
 int main() {
-  std::variant<int, double, std::string> variant;
-  variant = 1;
-  std::visit(visitor{
-      [](int a) {std::cout << "int";},
-      [](double a) {std::cout << "double";},
-      [](std::string a) {std::cout << "string";}
-  }, variant);
-  variant = 1.0;
-  std::visit(visitor{
-      [](int a) {std::cout << "int";},
-      [](double a) {std::cout << "double";},
-      [](std::string a) {std::cout << "string";}
-  }, variant);
-  variant = "54854";
-  std::visit(visitor{
-      [](int a) {std::cout << "int";},
-      [](double a) {std::cout << "double";},
-      [](std::string a) {std::cout << "string";}
-  }, variant);
-
-  chain ch;
-  ch.add_handler([] (const auto &a) -> std::optional<int>{
-    const auto b = std::atoi(a.c_str());
-    if (b < 10) {
-      return b+10;
-    }
-    return std::nullopt;
-  });
-  ch.add_handler([] (const auto &a)  -> std::optional<int>{
-    const auto b = std::atoi(a.c_str());
-    if (b < 15) {
-      return b+100;
-    }
-    return std::nullopt;
-  });
-  ch.add_handler([] (const auto &a) -> std::optional<int> {
-    const auto b = std::atoi(a.c_str());
-    if (b < 20) {
-      return b+1000;
-    }
-    return std::nullopt;
-  });
-  ch.add_handler([] (const auto &a) -> std::optional<int> {
-    const auto b = std::atoi(a.c_str());
-    if (b < 25) {
-      return b+10000;
-    }
-    return std::nullopt;
-  });
-  for (int i = 0; i < 25; ++i)
-    std::cout << ch.notify(std::to_string(i)).value() << std::endl;
-  return 0;
-  lazy_init<int> lazy{[] {std::cout << "init\n"; return 10;}};
-  std::cout << "hihihi\n";
-  std::cout << *lazy << std::endl;
-  std::cout << "hihihi\n";
-
-  return 0;
-  int cnt = 0;
-  object_pool<std::string, 10> pool{[&cnt] {++cnt;return std::to_string(cnt); }};
-  std::vector<std::reference_wrapper<std::string>> vec1;
-  for (std::size_t i = 0; i < 5; ++i) {
-    vec1.emplace_back(pool.lease());
+  std::vector<int> a{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  auto iter1 = bi<int>(a.begin());
+  auto iter2 = bi<int>(a.end());
+  for (auto i = iter1; i != iter2 - 1; ++i) {
+    std::cout << *i << " " << i[1] << std::endl;
   }
-  std::vector<std::reference_wrapper<std::string>> vec2;
-  for (std::size_t i = 0; i < 5; ++i) {
-    vec2.emplace_back(pool.lease());
+  --iter1;
+  --iter2;
+  for (auto i = iter2; i != iter1; --i) {
+    std::cout << *i << std::endl;
   }
 
-
-  for (const auto &ref : vec2) {
-    std::cout << ref.get() << std::endl;
-    pool.release(ref.get());
-  }
-  for (const auto &ref : vec1) {
-    std::cout << ref.get() << std::endl;
-    pool.release(ref.get());
-  }
-
-  std::vector<std::reference_wrapper<std::string>> vec3;
-  for (std::size_t i = 0; i < 10; ++i) {
-    vec3.emplace_back(pool.lease());
-  }
-  for (const auto &ref : vec3) {
-    std::cout << ref.get() << std::endl;
-    pool.release(ref.get());
-  }
-
-  return 0;
-  auto &e = CrMultiton::get_instance(1);
-  auto &e1 = CrMultiton::get_instance(1);
-  auto &e2 = CrMultiton::get_instance(2);
-  assert(&e == &e1);
-  assert(&e != &e2);
-
-  return 0;
-
-  DI d;
-  d.d = Hihi{};
-  d.print();
-  return 0;
-  auto factory = create_JaFactory();
-  factory.create(Hi::a, 1)->print();
-  factory.create(Hi::b, 2)->print();
-  factory.create(Hi::c, 3)->print();
-  factory.create(Hi::d, 4)->print();
-
-  Point a{.a = 1};
-  Point b{.a = 10};
-  std::cout << std::boolalpha << (a > b) << std::endl;
-  return 0;
-  prototype<Test> prototype{Test{1, 2, 3, 4}};
-
-  {
-    Test t = prototype.clone();
-    t.print();
-    t.a = 100;
-    t.print();
-    auto d = prototype.clone();
-    d.print();
-    prototype.get().print();
-  }
   return 0;
 }

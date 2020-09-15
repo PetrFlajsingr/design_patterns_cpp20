@@ -29,7 +29,7 @@ class chain_of_responsibility {
         return res.value();
       }
     }
-    std::nullopt;
+    return std::nullopt;
   }
 
  private:
