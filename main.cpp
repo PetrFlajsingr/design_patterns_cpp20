@@ -6,9 +6,12 @@
 #include "creational/prototype.h"
 #include "creational/singleton.h"
 #include "creational/lazy_init.h"
+#include "behavioral/chain_of_responsibility.h"
+#include "behavioral/visitor.h"
 #include <cassert>
 #include <iostream>
 #include <type_traits>
+#include <variant>
 
 struct Test {
   int a;
@@ -119,7 +122,65 @@ struct CrBuilder {
 using CrMultiton = multiton<int, Cr, CrBuilder>;
 using CrSingleton = singleton<Cr, CrBuilder>;
 
+using chain = chain_of_responsibility<int, std::string>;
+
+
+
+
+
 int main() {
+  std::variant<int, double, std::string> variant;
+  variant = 1;
+  std::visit(visitor{
+      [](int a) {std::cout << "int";},
+      [](double a) {std::cout << "double";},
+      [](std::string a) {std::cout << "string";}
+  }, variant);
+  variant = 1.0;
+  std::visit(visitor{
+      [](int a) {std::cout << "int";},
+      [](double a) {std::cout << "double";},
+      [](std::string a) {std::cout << "string";}
+  }, variant);
+  variant = "54854";
+  std::visit(visitor{
+      [](int a) {std::cout << "int";},
+      [](double a) {std::cout << "double";},
+      [](std::string a) {std::cout << "string";}
+  }, variant);
+
+  chain ch;
+  ch.add_handler([] (const auto &a) -> std::optional<int>{
+    const auto b = std::atoi(a.c_str());
+    if (b < 10) {
+      return b+10;
+    }
+    return std::nullopt;
+  });
+  ch.add_handler([] (const auto &a)  -> std::optional<int>{
+    const auto b = std::atoi(a.c_str());
+    if (b < 15) {
+      return b+100;
+    }
+    return std::nullopt;
+  });
+  ch.add_handler([] (const auto &a) -> std::optional<int> {
+    const auto b = std::atoi(a.c_str());
+    if (b < 20) {
+      return b+1000;
+    }
+    return std::nullopt;
+  });
+  ch.add_handler([] (const auto &a) -> std::optional<int> {
+    const auto b = std::atoi(a.c_str());
+    if (b < 25) {
+      return b+10000;
+    }
+    return std::nullopt;
+  });
+  for (int i = 0; i < 25; ++i)
+    std::cout << ch.notify(std::to_string(i)).value() << std::endl;
+  return 0;
   lazy_init<int> lazy{[] {std::cout << "init\n"; return 10;}};
   std::cout << "hihihi\n";
   std::cout << *lazy << std::endl;

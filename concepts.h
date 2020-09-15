@@ -53,4 +53,5 @@ concept hashable = requires(T t) {
   ->convertible_to<std::size_t>;
 };
 
+
 #endif//DESIGN_PATTERNS_CONCEPTS_H

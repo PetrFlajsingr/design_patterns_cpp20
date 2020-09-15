@@ -11,6 +11,8 @@ template<typename T>
 class dependency {
  public:
   using value_type = T;
+  using reference = T&;
+  using const_reference = const T&;
   dependency() {}
   dependency(const dependency &other) = delete;
   dependency(dependency &&other) = delete;
@@ -22,11 +24,12 @@ class dependency {
     return *this;
   }
 
-  [[nodiscard]] value_type &get() {
-    if (!value.has_value()) {
-      throw std::bad_optional_access{};
-    }
-    return value.value();
+  [[nodiscard]] reference get() {
+    return *value;
+  }
+
+  [[nodiscard]] const_reference get() const {
+    return *value;
   }
 
   void install(value_type &&value) {
@@ -35,6 +38,22 @@ class dependency {
 
   [[nodiscard]] bool is_set() const {
     return value.has_value();
+  }
+
+  pointer operator->() {
+    return &*value;
+  }
+
+  reference operator*() {
+    return *value;
+  }
+
+  const_pointer operator->() const {
+    return &*value;
+  }
+
+  const_reference operator*() const {
+    return *value;
   }
 
  private:
