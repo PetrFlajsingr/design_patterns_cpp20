@@ -34,7 +34,7 @@ class singleton {
   }
 
   const_pointer operator->() const {
-    return value;
+    return &value;
   }
 
   const_reference operator*() const {

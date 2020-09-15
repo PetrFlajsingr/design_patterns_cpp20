@@ -5,6 +5,7 @@
 #include "creational/object_pool.h"
 #include "creational/prototype.h"
 #include "creational/singleton.h"
+#include "creational/lazy_init.h"
 #include <cassert>
 #include <iostream>
 #include <type_traits>
@@ -119,6 +120,12 @@ using CrMultiton = multiton<int, Cr, CrBuilder>;
 using CrSingleton = singleton<Cr, CrBuilder>;
 
 int main() {
+  lazy_init<int> lazy{[] {std::cout << "init\n"; return 10;}};
+  std::cout << "hihihi\n";
+  std::cout << *lazy << std::endl;
+  std::cout << "hihihi\n";
+
+  return 0;
   int cnt = 0;
   object_pool<std::string, 10> pool{[&cnt] {++cnt;return std::to_string(cnt); }};
   std::vector<std::reference_wrapper<std::string>> vec1;
