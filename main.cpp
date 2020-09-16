@@ -12,6 +12,7 @@
 #include <cassert>
 #include <concepts>
 #include <iostream>
+#include <numeric>
 #include <type_traits>
 #include <variant>
 
@@ -138,7 +139,7 @@ class hihihi {
     return curr != end;
   }
 
-  T &current() {
+  const T &current() {
     return curr;
   }
 
@@ -151,7 +152,7 @@ class hihihi {
   T end;
 };
 template<typename T>
-using range_iter = input_iterator<T, hihihi<T>, false>;
+using range_iter = input_iterator<T, true, hihihi<T>>;
 
 template<typename T>
 struct range {
@@ -178,39 +179,39 @@ using out_i = output_iterator<T, out_iter<T>, false>;
 
 template<typename T>
 struct hi {
-  hi() {}
-  hi(typename std::vector<T>::iterator iter) : iter(iter) {
+  constexpr hi() {}
+  constexpr hi(const int* iter) : iter(iter) {
   }
-  void next() {
+  constexpr void next() {
     ++iter;
   }
 
-  bool equals(const hi &other) const {
+  constexpr bool equals(const hi &other) const {
     return iter == other.iter;
   }
 
-  T &current() {
+  constexpr const T &current() {
     return *iter;
   }
 
-  void previous() {
+  constexpr void previous() {
     --iter;
   }
 
-  void advance(int diff) {
+  constexpr void advance(int diff) {
     iter += diff;
   }
 
-  int distance(const hi &other) const {
+  constexpr int distance(const hi &other) const {
     return iter - other.iter;
   }
 
 
-  typename std::vector<T>::iterator iter;
+  const int* iter;
 };
 
 template<typename T>
-using fwd = forward_iterator<int, hi<int>, true>;
+using fwd = forward_iterator<T, true, hi<T>>;
 
 template <typename T>
 struct vec{
@@ -226,22 +227,59 @@ struct vec{
 };
 
 template<typename T>
-using bi = random_access_iterator<int, hi<int>, true>;
+using bi = random_access_iterator<int, true, hi<int>>;
+
+template <typename T>
+concept printable = requires (T t) {
+  {t.print()};
+};
+
+template <typename T>
+struct itera_container_impl {
+  itera_container_impl(std::vector<T> vec) : vec(vec) {}
+
+  void iter_init() {
+    iter = vec.begin();
+  }
+
+  void iter_next() {
+    ++iter;
+  }
+
+  bool iter_valid() const {
+    return iter != vec.end();
+  }
+
+  T &iter_current() {
+    return *iter;
+  }
+
+  void iter_previous() {
+    --iter;
+  }
+
+  std::vector<T> vec;
+
+  typename std::vector<T>::iterator iter;
+};
+
+template<typename T>
+using itera_container = bidirectional_iterator_container<T, false, itera_container_impl<T>>;
 
 
 static_assert(std::random_access_iterator<bi<int>>);
+constexpr std::array<int, 10> arr{1,1,1,1,1,1,1,1,1,1};
 int main() {
-  std::vector<int> a{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  auto iter1 = bi<int>(a.begin());
-  auto iter2 = bi<int>(a.end());
-  for (auto i = iter1; i != iter2 - 1; ++i) {
-    std::cout << *i << " " << i[1] << std::endl;
-  }
-  --iter1;
-  --iter2;
-  for (auto i = iter2; i != iter1; --i) {
-    std::cout << *i << std::endl;
+  std::vector<int> a{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+  itera_container<int> container{a};
+
+  for (auto a : container) {
+    std::cout << a << std::endl;
   }
 
+  constexpr auto beg = bi<int>(arr.begin());
+  constexpr auto end = bi<int>(arr.end());
+  constexpr auto result = std::accumulate(beg, end, 0);
+  std::cout << result;
   return 0;
 }
