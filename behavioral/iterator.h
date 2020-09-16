@@ -8,6 +8,8 @@
 #include <concepts>
 #include <iterator>
 
+// TODO: reverse iters, const iters
+
 template<typename T, bool IsConst>
 struct iterator_types {
   using difference_type = int64_t;
@@ -348,9 +350,9 @@ struct forward_iterator_container : Derived {
 };
 
 template<typename T, bool IsConst, container_forward_iter<T, IsConst> Derived>
-struct bidirectional_iterator_container : forward_iterator_container<T, IsConst, Derived>  {
+struct bidirectional_iterator_container : Derived  {
   template<typename... Args>
-  requires std::is_constructible_v<Derived, Args...> constexpr explicit bidirectional_iterator_container(Args &&... args) : forward_iterator_container<T, IsConst, Derived>(std::forward<Args>(args)...) {}
+  requires std::is_constructible_v<Derived, Args...> constexpr explicit bidirectional_iterator_container(Args &&... args) : Derived(std::forward<Args>(args)...) {}
 
   constexpr bidirectional_iterator_container() : Derived() {}
 
@@ -377,6 +379,13 @@ struct bidirectional_iterator_container : forward_iterator_container<T, IsConst,
   };
 
   using iterator = bidirectional_iterator<T, IsConst, iter>;
+
+  iterator begin() {
+    return iterator{*this};
+  }
+  iterator end() {
+    return iterator{*this};
+  }
 };
 
 #endif//DESIGN_PATTERNS_ITERATOR_H
