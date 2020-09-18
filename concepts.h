@@ -48,7 +48,7 @@ template<typename T>
 concept noexcept_copy_assignable = copy_assignable<T> &&noexcept(T::operator==(std::declval<const T &>()));
 
 template<typename T>
-concept noexcept_copyable = copyable<T> && (noexcept_copy_constructible<T> || noexcept_copy_assignable<T>);
+concept noexcept_copyable = noexcept_copy_constructible<T> || noexcept_copy_assignable<T>;
 
 template<typename T>
 concept movable = std::move_constructible<T> || move_assign_constructible<T>;
@@ -172,6 +172,7 @@ concept allocator_aware_container = container<T> &&requires(T t, const T &const_
 &&std::constructible_from<T, typename T::allocator_type>
     &&std::constructible_from<T, const T &, typename T::allocator_type>
         &&std::constructible_from<T, T &&, typename T::allocator_type>;
+
 
 }// namespace pf
 #endif//DESIGN_PATTERNS_CONCEPTS_H
