@@ -5,7 +5,7 @@
 #ifndef DESIGN_PATTERNS_SINGLETON_H
 #define DESIGN_PATTERNS_SINGLETON_H
 
-#include "../concepts.h";
+#include "../concepts.h"
 
 namespace pf {
 template<typename T, invocable_returning<T> Creator>

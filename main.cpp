@@ -13,6 +13,7 @@
 #include <concepts>
 #include <iostream>
 #include <numeric>
+#include <stack>
 #include <type_traits>
 #include <variant>
 
@@ -72,7 +73,7 @@ struct Jaaa : public Ja {
   }
 };
 
-using JaFactory = abstract_factory<Hi, std::unique_ptr<Ja>, int>;
+using JaFactory = pf::abstract_factory<Hi, std::unique_ptr<Ja>, int>;
 
 JaFactory create_JaFactory() {
   return JaFactory{{
@@ -98,7 +99,7 @@ struct Hihi {
 };
 
 struct DI {
-  dependency<Hihi> d;
+  pf::dependency<Hihi> d;
 
   void print() {
     d.get().print();
@@ -122,10 +123,10 @@ struct CrBuilder {
   }
 };
 
-using CrMultiton = multiton<int, Cr, CrBuilder>;
-using CrSingleton = singleton<Cr, CrBuilder>;
+using CrMultiton = pf::multiton<int, Cr, CrBuilder>;
+using CrSingleton = pf::singleton<Cr, CrBuilder>;
 
-using chain = chain_of_responsibility<int, std::string>;
+using chain = pf::chain_of_responsibility<int, std::string>;
 
 template<typename T>
 class hihihi {
@@ -152,7 +153,7 @@ class hihihi {
   T end;
 };
 template<typename T>
-using range_iter = input_iterator<T, true, hihihi<T>>;
+using range_iter = pf::input_iterator<T, true, hihihi<T>>;
 
 template<typename T>
 struct range {
@@ -175,7 +176,7 @@ struct out_iter {
 };
 
 template<typename T>
-using out_i = output_iterator<T, out_iter<T>, false>;
+using out_i = pf::output_iterator<T, out_iter<T>, false>;
 
 template<typename T>
 struct hi {
@@ -210,7 +211,7 @@ struct hi {
 };
 
 template<typename T>
-using fwd = forward_iterator<T, true, hi<T>>;
+using fwd = pf::forward_iterator<T, true, hi<T>>;
 
 template<typename T>
 struct vec {
@@ -226,7 +227,7 @@ struct vec {
 };
 
 template<typename T>
-using bi = random_access_iterator<int, true, hi<int>>;
+using bi = pf::random_access_iterator<int, true, hi<int>>;
 
 template<typename T>
 concept printable = requires(T t) {
@@ -263,7 +264,7 @@ struct itera_container_impl {
 };
 
 template<typename T>
-using itera_container = bidirectional_iterator_container<T, false, itera_container_impl<T>>;
+using itera_container = pf::bidirectional_iterator_container<T, false, itera_container_impl<T>>;
 
 struct TTT {
   int a;
@@ -321,34 +322,22 @@ struct C {
   int c;
 };
 
-namespace details {
-template<class>
-struct is_ref_wrapper : std::false_type {};
-template<class T>
-struct is_ref_wrapper<std::reference_wrapper<T>> : std::true_type {};
-
-template<class T>
-using not_ref_wrapper = std::negation<is_ref_wrapper<std::decay_t<T>>>;
-
-template<class D, class...>
-struct return_type_helper { using type = D; };
-template<class... Types>
-struct return_type_helper<void, Types...> : std::common_type<Types...> {
-  static_assert(std::conjunction_v<not_ref_wrapper<Types>...>,
-                "Types cannot contain reference_wrappers when D is void");
-};
-
-template<class D, class... Types>
-using return_type = std::array<typename return_type_helper<D, Types...>::type,
-                               sizeof...(Types)>;
-}// namespace details
-
-template<class D = void, class... Types>
-constexpr details::return_type<D, Types...> make_array(Types &&... t) {
-  return {std::forward<Types>(t)...};
-}
 
 int main() {
-  auto arr = make_array(1, 2, 3.1, 4, 5, 6, 7);
+  int cnt = 0;
+  pf::object_pool<Test, 10, pf::pool_alloc_strategy::preallocate> pool{[&] { return Test{.a = cnt++,.b = cnt++,.c = cnt++,.d = cnt++};}};
+
+  std::stack<std::reference_wrapper<Test>> st;
+  for (int i = 0; i < 10; ++i) {
+    st.push(pool.lease());
+  }
+  for (int i = 0; i < 5; ++i) {
+    pool.release(st.top());
+    st.pop();
+  }
+
+  for (int i = 0; i < 10; ++i) {
+    st.push(pool.lease());
+  }
   return 0;
 }
