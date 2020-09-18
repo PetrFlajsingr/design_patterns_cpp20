@@ -6,21 +6,21 @@
 #define DESIGN_PATTERNS_MULTITON_H
 
 #include "../concepts.h"
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
-
-
-template <hashable H, typename T, returning<T, H> Creator>
+namespace pf {
+template<hashable H, typename T, invocable_returning<T, H> Creator>
 class multiton {
   friend class std::unique_ptr<multiton>;
+
  public:
   using key_type = H;
   using value_type = T;
-  using reference = T&;
-  using const_reference = const T&;
-  using pointer = T*;
-  using const_pointer = const T*;
+  using reference = T &;
+  using const_reference = const T &;
+  using pointer = T *;
+  using const_pointer = const T *;
 
   multiton(multiton &&) = delete;
   multiton &operator=(multiton &&) = delete;
@@ -57,7 +57,6 @@ class multiton {
   value_type value;
 
   explicit multiton(key_type h) : value(Creator{}(h)) {}
-
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_MULTITON_H

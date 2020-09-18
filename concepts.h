@@ -1,57 +1,69 @@
 //
 // Created by Petr on 15.09.2020.
 //
-
 #ifndef DESIGN_PATTERNS_CONCEPTS_H
 #define DESIGN_PATTERNS_CONCEPTS_H
 
-#include <type_traits>
 #include <functional>
+#include <istream>
+#include <ostream>
+#include <type_traits>
+
+namespace pf {
 
 template<typename T>
-concept copy_constructible = std::is_copy_constructible_v<T>;
+concept enum_type = std::is_enum_v<T>;
+
+template<typename F, typename T, typename... Args>
+concept invocable_returning = std::same_as<std::invoke_result_t<F, Args...>, T>;
+
+template<typename T>
+concept hashable = requires(T t) {
+  { std::hash<T>{}(t) }
+  ->std::convertible_to<std::size_t>;
+};
 
 template<typename T>
 concept copy_assignable = std::is_copy_assignable_v<T>;
 
 template<typename T>
-concept move_constructible = std::is_move_constructible_v<T>;
+concept copy_assign_constructible = copy_assignable<T> &&std::default_initializable<T>;
 
 template<typename T>
 concept move_assignable = std::is_move_assignable_v<T>;
 
 template<typename T>
-concept copy_assign_movable = copy_assignable<T> &&std::is_constructible_v<T> &&move_constructible<T>;
+concept move_assign_constructible = move_assignable<T> &&std::default_initializable<T>;
 
 template<typename T>
-concept copyable = copy_constructible<T> || copy_assign_movable<T>;
+concept copyable = std::copy_constructible<T> || copy_assign_constructible<T>;
 
 template<typename T>
-concept enum_type = std::is_enum_v<T>;
-
-template<typename T, typename U>
-concept same = std::is_same_v<T, U>;
-
-template<typename From, typename To>
-concept convertible_to = std::is_convertible_v<From, To>;
-
-template<typename F, typename... Args>
-concept invocable = std::is_invocable_v<F, Args...>;
-
-template<typename F>
-concept simple_invocable = std::is_invocable_v<F>;
-
-template<typename F, typename R, typename... Args>
-concept returning = requires(F f, Args... args) {
-  { f(args...) }
-  ->convertible_to<R>;
-} && invocable<F, Args...>;
+concept noexcept_copy_constructible = std::copy_constructible<T> &&noexcept(T(std::declval<const T &>()));
 
 template<typename T>
-concept hashable = requires(T t) {
-  { std::hash<T>{}(t)}
-  ->convertible_to<std::size_t>;
+concept noexcept_copy_assignable = copy_assignable<T> &&noexcept(T::operator==(std::declval<const T &>()));
+
+template<typename T>
+concept noexcept_copyable = copyable<T> && (noexcept_copy_constructible<T> || noexcept_copy_assignable<T>);
+
+template<typename T>
+concept movable = std::move_constructible<T> || move_assign_constructible<T>;
+
+template<typename T>
+concept stream_outputable = requires(const T &t, std::ostream &o) {
+  { o << t }
+  ->std::same_as<std::ostream>;
 };
 
+template<typename T>
+concept stream_inputable = requires(T &t, std::istream &i) {
+  { i >> t }
+  ->std::same_as<std::istream>;
+};
 
+template<typename T>
+concept streamable = stream_inputable<T> &&stream_outputable<T>;
+
+}// namespace pf
 #endif//DESIGN_PATTERNS_CONCEPTS_H

@@ -5,14 +5,17 @@
 #ifndef DESIGN_PATTERNS_SINGLETON_H
 #define DESIGN_PATTERNS_SINGLETON_H
 
-template <typename T, returning<T> Creator>
+#include "../concepts.h";
+
+namespace pf {
+template<typename T, invocable_returning<T> Creator>
 class singleton {
  public:
   using value_type = T;
-  using reference = T&;
-  using const_reference = const T&;
-  using pointer = T*;
-  using const_pointer = const T*;
+  using reference = T &;
+  using const_reference = const T &;
+  using pointer = T *;
+  using const_pointer = const T *;
 
   singleton(singleton &&) = delete;
   singleton &operator=(singleton &&) = delete;
@@ -23,7 +26,6 @@ class singleton {
     static singleton instance{};
     return instance;
   }
-
 
   pointer operator->() {
     return &value;
@@ -44,7 +46,6 @@ class singleton {
  private:
   singleton() : value(Creator{}()) {}
   T value;
-
 };
-
+}
 #endif//DESIGN_PATTERNS_SINGLETON_H

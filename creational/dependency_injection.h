@@ -7,14 +7,15 @@
 
 #include <optional>
 
+namespace pf {
 template<typename T>
 class dependency {
  public:
   using value_type = T;
-  using reference = T&;
-  using const_reference = const T&;
-  using pointer = T*;
-  using const_pointer = const T*;
+  using reference = T &;
+  using const_reference = const T &;
+  using pointer = T *;
+  using const_pointer = const T *;
   dependency() = default;
   dependency(const dependency &other) = delete;
   dependency(dependency &&other) = delete;
@@ -61,5 +62,5 @@ class dependency {
  private:
   std::optional<value_type> value = std::nullopt;
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_DEPENDENCY_INJECTION_H

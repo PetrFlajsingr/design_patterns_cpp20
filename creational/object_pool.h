@@ -11,6 +11,7 @@
 #include <list>
 #include <mutex>
 
+namespace pf {
 template<typename T, std::size_t PoolSize>
 class object_pool {
  public:
@@ -18,7 +19,7 @@ class object_pool {
   using reference = T &;
   using const_reference = const T &;
 
-  explicit object_pool(simple_invocable auto &&generator) {
+  explicit object_pool(std::invocable auto &&generator) {
     std::generate_n(std::back_inserter(available), PoolSize, [&generator] { return std::make_unique<T>(generator()); });
   }
 
@@ -50,5 +51,5 @@ class object_pool {
   std::list<std::unique_ptr<T>> in_use;
   std::list<std::unique_ptr<T>> available;
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_OBJECT_POOL_H

@@ -180,7 +180,7 @@ using out_i = output_iterator<T, out_iter<T>, false>;
 template<typename T>
 struct hi {
   constexpr hi() {}
-  constexpr hi(const int* iter) : iter(iter) {
+  constexpr hi(const int *iter) : iter(iter) {
   }
   constexpr void next() {
     ++iter;
@@ -206,16 +206,15 @@ struct hi {
     return iter - other.iter;
   }
 
-
-  const int* iter;
+  const int *iter;
 };
 
 template<typename T>
 using fwd = forward_iterator<T, true, hi<T>>;
 
-template <typename T>
-struct vec{
-  vec(std::vector<T> &v): v(v) {}
+template<typename T>
+struct vec {
+  vec(std::vector<T> &v) : v(v) {}
   fwd<T> begin() {
     return fwd<T>{v.begin()};
   }
@@ -229,12 +228,12 @@ struct vec{
 template<typename T>
 using bi = random_access_iterator<int, true, hi<int>>;
 
-template <typename T>
-concept printable = requires (T t) {
+template<typename T>
+concept printable = requires(T t) {
   {t.print()};
 };
 
-template <typename T>
+template<typename T>
 struct itera_container_impl {
   itera_container_impl(std::vector<T> vec) : vec(vec) {}
 
@@ -266,20 +265,90 @@ struct itera_container_impl {
 template<typename T>
 using itera_container = bidirectional_iterator_container<T, false, itera_container_impl<T>>;
 
+struct TTT {
+  int a;
+};
+
+namespace detail {
+template<typename Ignore>
+struct anything {
+  template<typename T,
+           typename = std::enable_if_t<not std::is_same<Ignore, std::decay_t<T>>{}>>
+  operator T &&();
+};
+
+template<typename U, typename = void, typename... args>
+struct test : test<U, void, args..., anything<U>> {};
+template<typename U, typename... args>
+struct test<U, std::enable_if_t<std::is_constructible<U, args...>{} && sizeof...(args) < 32>, args...>
+    : std::integral_constant<std::size_t, sizeof...(args)> {};
+template<typename U, typename... args>
+struct test<U, std::enable_if_t<sizeof...(args) == 32>, args...>
+    : std::integral_constant<std::size_t, (std::size_t) -1> {};
+}// namespace detail
+
+template<typename U>
+using ctor_arity = detail::test<U, void>;
+
+template<typename... Args>
+struct composite : Args... {
+  template<typename... CtorArgs>
+  explicit composite(CtorArgs &&... args) : Args(ctor_arity<Args>::value)... {}
+};
 
 static_assert(std::random_access_iterator<bi<int>>);
-constexpr std::array<int, 10> arr{1,1,1,1,1,1,1,1,1,1};
-int main() {
-  std::vector<int> a{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-  itera_container<int> container{a};
+constexpr std::array<int, 10> arr{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-  for (auto a : container) {
-    std::cout << a << std::endl;
+struct A {
+  A(int a) : a(a) {}
+  void printA() {
+    std::cout << a << " A\n";
   }
+  int a;
+};
+struct B {
+  B(int b) : b(b) {}
+  void printB() {
+    std::cout << b << " B\n";
+  }
+  int b;
+};
+struct C {
+  C(int c) : c(c) {}
+  void printC() {
+    std::cout << c << " C\n";
+  }
+  int c;
+};
 
-  constexpr auto beg = bi<int>(arr.begin());
-  constexpr auto end = bi<int>(arr.end());
-  constexpr auto result = std::accumulate(beg, end, 0);
-  std::cout << result;
+namespace details {
+template<class>
+struct is_ref_wrapper : std::false_type {};
+template<class T>
+struct is_ref_wrapper<std::reference_wrapper<T>> : std::true_type {};
+
+template<class T>
+using not_ref_wrapper = std::negation<is_ref_wrapper<std::decay_t<T>>>;
+
+template<class D, class...>
+struct return_type_helper { using type = D; };
+template<class... Types>
+struct return_type_helper<void, Types...> : std::common_type<Types...> {
+  static_assert(std::conjunction_v<not_ref_wrapper<Types>...>,
+                "Types cannot contain reference_wrappers when D is void");
+};
+
+template<class D, class... Types>
+using return_type = std::array<typename return_type_helper<D, Types...>::type,
+                               sizeof...(Types)>;
+}// namespace details
+
+template<class D = void, class... Types>
+constexpr details::return_type<D, Types...> make_array(Types &&... t) {
+  return {std::forward<Types>(t)...};
+}
+
+int main() {
+  auto arr = make_array(1, 2, 3.1, 4, 5, 6, 7);
   return 0;
 }

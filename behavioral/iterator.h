@@ -9,7 +9,7 @@
 #include <iterator>
 
 // TODO: reverse iters, const iters
-
+namespace pf {
 template<typename T, bool IsConst>
 struct iterator_types {
   using difference_type = int64_t;
@@ -18,7 +18,7 @@ struct iterator_types {
   using reference = std::conditional_t<IsConst, const T &, T &>;
 };
 
-template <typename T, typename U, bool IsConst>
+template<typename T, typename U, bool IsConst>
 concept container_forward_iter = requires(T t, const T const_t) {
   {t.iter_init()};
   {t.iter_next()};
@@ -28,13 +28,10 @@ concept container_forward_iter = requires(T t, const T const_t) {
   ->std::same_as<typename iterator_types<U, IsConst>::reference>;
 };
 
-template <typename T, typename U, bool IsConst>
-concept container_bidirectional_iter = container_forward_iter<T, U, IsConst> && requires(T t, const T const_t) {
+template<typename T, typename U, bool IsConst>
+concept container_bidirectional_iter = container_forward_iter<T, U, IsConst> &&requires(T t, const T const_t) {
   {t.iter_previous()};
 };
-
-
-
 
 template<typename T, typename U, bool IsConst>
 concept input_iter = requires(T t, const T const_t) {
@@ -250,7 +247,6 @@ struct random_access_iterator : forward_iterator<T, IsConst, Derived> {
   template<typename... Args>
   requires std::is_constructible_v<Derived, Args...> constexpr explicit random_access_iterator(Args &&... args) : forward_iterator<T, IsConst, Derived>(std::forward<Args>(args)...) {}
 
-
   constexpr random_access_iterator &operator++() {
     Derived::next();
     return *this;
@@ -311,8 +307,6 @@ struct random_access_iterator : forward_iterator<T, IsConst, Derived> {
   }
 };
 
-
-
 template<typename T, bool IsConst, container_forward_iter<T, IsConst> Derived>
 struct forward_iterator_container : Derived {
   template<typename... Args>
@@ -350,7 +344,7 @@ struct forward_iterator_container : Derived {
 };
 
 template<typename T, bool IsConst, container_forward_iter<T, IsConst> Derived>
-struct bidirectional_iterator_container : Derived  {
+struct bidirectional_iterator_container : Derived {
   template<typename... Args>
   requires std::is_constructible_v<Derived, Args...> constexpr explicit bidirectional_iterator_container(Args &&... args) : Derived(std::forward<Args>(args)...) {}
 
@@ -387,5 +381,5 @@ struct bidirectional_iterator_container : Derived  {
     return iterator{*this};
   }
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_ITERATOR_H

@@ -5,20 +5,21 @@
 #ifndef DESIGN_PATTERNS_LAZY_INIT_H
 #define DESIGN_PATTERNS_LAZY_INIT_H
 
-#include<functional>
 #include "../concepts.h"
+#include <functional>
 
-template <typename T>
+namespace pf {
+template<typename T>
 class lazy_init {
  public:
   using calc_fnc = std::function<T()>;
   using value_type = T;
-  using reference = T&;
-  using const_reference = const T&;
-  using pointer = T*;
-  using const_pointer = const T*;
+  using reference = T &;
+  using const_reference = const T &;
+  using pointer = T *;
+  using const_pointer = const T *;
 
-  explicit lazy_init(simple_invocable auto calc) : calc(calc) {}
+  explicit lazy_init(std::invocable auto calc) : calc(calc) {}
 
   pointer operator->() {
     calculate();
@@ -48,7 +49,6 @@ class lazy_init {
   }
   calc_fnc calc;
   std::unique_ptr<T> value;
-
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_LAZY_INIT_H

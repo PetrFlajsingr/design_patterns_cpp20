@@ -5,19 +5,20 @@
 #ifndef DESIGN_PATTERNS_RAII_H
 #define DESIGN_PATTERNS_RAII_H
 
-#include "../concepts.h"
+#include <functional>
 
+namespace pf {
 class RAII {
  public:
-  template<simple_invocable F>
+  template<std::invocable F>
   explicit RAII(F &&callable) : callable(std::forward<F>(callable)) {}
 
   ~RAII() {
-    callable();
+    std::invoke(callable);
   }
 
  private:
   std::function<void()> callable;
 };
-
+}// namespace pf
 #endif//DESIGN_PATTERNS_RAII_H
