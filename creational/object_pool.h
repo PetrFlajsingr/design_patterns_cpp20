@@ -12,6 +12,7 @@
 #include <iostream>
 #include <list>
 #include <mutex>
+#include <experimental/memory>
 
 namespace pf {
 
@@ -89,11 +90,15 @@ class object_pool {
   using value_type = T;
   using reference = T &;
   using const_reference = const T &;
+  using pointer = std::experimental::observer_ptr<T>;
+  using const_pointer = std::experimental::observer_ptr<const T>;
+
+  object_pool() requires std::default_initializable<T> : allocator([] {return T();}, available_, in_use) {}
 
   explicit object_pool(std::invocable auto &&generator) : allocator(generator, available_, in_use) {
   }
 
-  [[nodiscard]] reference lease() {
+  [[nodiscard]] pointer lease() {
     std::unique_lock lock{mutex};
     allocator.on_lease(available_, in_use);
     if (available_.empty()) {
@@ -102,14 +107,13 @@ class object_pool {
     const auto first_available_iter = available_.begin();
     auto &ref = in_use.emplace_front(std::move(*first_available_iter));
     available_.erase(first_available_iter);
-    return *ref;
+    return std::experimental::make_observer(ref.get());
   }
 
-  void release(reference object) {
+  void release(pointer object) {
     std::unique_lock lock{mutex};
-    const auto ptr = &object;
-    if (auto iter = std::find_if(in_use.begin(), in_use.end(), [ptr](const auto &obj) {
-          return &*obj == ptr;
+    if (auto iter = std::find_if(in_use.begin(), in_use.end(), [&object](const auto &obj) {
+          return obj.get() == object.get();
         });
         iter != in_use.end()) {
       auto &ref = available_.emplace_back(std::move(*iter));

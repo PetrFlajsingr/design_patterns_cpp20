@@ -49,9 +49,35 @@ class prototype {
     }
   }
 
+  std::unique_ptr<T> cloneUnique()const noexcept(is_noexcept_copyable) {
+    if constexpr (std::copy_constructible<T>) {
+      return std::make_unique<T>(prototype_instance);
+    } else {
+      auto result = std::make_unique<T>();
+      *result = prototype_instance;
+      return std::move(result);
+    }
+  }
+
+  std::shared_ptr<T> cloneShared()const noexcept(is_noexcept_copyable) {
+    if constexpr (std::copy_constructible<T>) {
+      return std::make_shared<T>(prototype_instance);
+    } else {
+      auto result = std::make_shared<T>();
+      *result = prototype_instance;
+      return std::move(result);
+    }
+  }
+
   const T &get() const noexcept {
     return prototype_instance;
   }
 };
+
+template<copyable T>
+prototype<T> make_prototype(T &&instance) {
+  return prototype(std::forward<T>(instance));
+}
+
 }// namespace pf
 #endif//DESIGN_PATTERNS_PROTOTYPE_H
